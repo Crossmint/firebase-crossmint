@@ -10,8 +10,8 @@ export default function handler(req, res) {
 
     default:
       res
-        .status(400)
-        .json({ error: true, message: "Unsupported request method" });
+        .status(405)
+        .json({ error: true, message: "Unsupported request method: " + req.method });
       break;
   }
 }
