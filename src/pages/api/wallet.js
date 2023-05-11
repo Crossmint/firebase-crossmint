@@ -1,3 +1,14 @@
+var admin = require("firebase-admin");
+
+var serviceAccount = require("./credentials.json");
+
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    name: "Crossmint-Firebase",
+  });
+}
+
 export default function handler(req, res) {
   switch (req.method) {
     case "GET":
@@ -36,28 +47,42 @@ async function handlePost(req, res) {
 }
 
 async function handleGet(req, res) {
+  const idToken = req.query.tokenId;
   const userId = req.query.userId;
-  if (userId == null) {
-    res.status(400).json({ error: true, message: "Missing userId parameter" });
-    return;
-  }
 
-  const data = await findExistingWallets(userId);
-  if (data.error) {
-    res.status(400).json(data);
-    return;
-  }
+  admin
+    .auth()
+    .verifyIdToken(idToken)
+    .then(async function (decodedToken) {
+      var uid = decodedToken.uid;
+      const user = await admin.auth().getUser(uid);
 
-  let jsonData = {};
+      if (user.email == userId) {
+        const data = await findExistingWallets(userId);
+        if (data.error) {
+          res.status(400).json(data);
+          return;
+        }
+        let jsonData = {};
 
-  data.forEach((wallet) => {
-    const chain = wallet.chain;
-    const address = wallet.publicKey;
+        data.forEach((wallet) => {
+          const chain = wallet.chain;
+          const address = wallet.publicKey;
 
-    jsonData[chain] = address;
-  });
+          jsonData[chain] = address;
+        });
 
-  res.status(200).json(jsonData);
+        res.status(200).json(jsonData);
+      } else {
+        res.status(403).json({ error: "Not authorized" });
+        return;
+      }
+    })
+    // ...
+    .catch(function (error) {
+      res.status(400);
+      return;
+    });
 }
 
 async function createWallets(userId) {

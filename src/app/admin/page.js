@@ -16,7 +16,8 @@ function Page() {
 
   useEffect(() => {
     async function fetchData() {
-      const res = await fetch(`/api/wallet?userId=${user.email}`);
+      const tokenId = getAuth().ver
+      const res = await fetch(`/api/wallet?userId=${user.email}&tokenId=${getAuth().currentUser.accessToken}`);
       const jsonData = await res.json();
       setData(jsonData);
     }
