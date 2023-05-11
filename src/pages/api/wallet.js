@@ -28,22 +28,41 @@ export default function handler(req, res) {
 }
 
 async function handlePost(req, res) {
-  const body = JSON.parse(req.body);
+  const body = JSON.parse(req.body)
   const userId = body.userId;
-  if (userId == null) {
-    res.status(400).json({ error: true, message: "Missing userId parameter" });
-    return;
-  }
+  const idToken = body.tokenId;
 
-  const created = await createWallets(userId);
-  if (!created) {
-    res
-      .status(500)
-      .json({ error: true, message: "Failed to create wallets for user" });
-    return;
-  }
+  admin
+    .auth()
+    .verifyIdToken(idToken)
+    .then(async function (decodedToken) {
+      var uid = decodedToken.uid;
+      const user = await admin.auth().getUser(uid);
 
-  return res.status(200).json({ error: false });
+      if (user.email == userId) {
+        const created = await createWallets(userId);
+        if (!created) {
+          res.status(500).json({
+            error: true,
+            message: "Failed to create wallets for user",
+          });
+          return;
+        }
+        return res.status(200).json({
+          userId: userId,
+          walletsCreated: created
+        });
+      } else {
+        if (userId == null) {
+          res
+            .status(400)
+            .json({ error: true, message: "Missing userId parameter" });
+          return;
+        } else {
+          return res.status(403).json({ error: "Not authorized" });
+        }
+      }
+    });
 }
 
 async function handleGet(req, res) {
@@ -73,12 +92,12 @@ async function handleGet(req, res) {
         });
 
         res.status(200).json(jsonData);
+        return;
       } else {
         res.status(403).json({ error: "Not authorized" });
         return;
       }
     })
-    // ...
     .catch(function (error) {
       res.status(400);
       return;
