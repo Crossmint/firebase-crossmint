@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useAuthContext } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { getAuth, signOut } from "firebase/auth";
+import { headers } from "next/dist/client/components/headers";
 
 function Page() {
   const { user } = useAuthContext();
@@ -16,8 +17,9 @@ function Page() {
 
   useEffect(() => {
     async function fetchData() {
-      const tokenId = getAuth().ver
-      const res = await fetch(`/api/wallet?userId=${user.email}&tokenId=${getAuth().currentUser.accessToken}`);
+      const res = await fetch(`/api/wallet?userId=${user.email}`, {
+        headers: { Authorization: getAuth().currentUser.accessToken },
+      });
       const jsonData = await res.json();
       setData(jsonData);
     }
@@ -28,7 +30,7 @@ function Page() {
     const auth = getAuth();
     signOut(auth).then(() => {
       router.push("/");
-    })
+    });
   }
 
   if (!data) {

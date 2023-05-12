@@ -1,11 +1,18 @@
+import {
+  verifyIdTokenAndUserIdMatch,
+  createWallets,
+  findExistingWallets,
+  getUserEmailFromIdToken
+} from "../../utils/helpers.js";
+
 var admin = require("firebase-admin");
 
-var serviceAccount = require("./credentials.json");
+var serviceAccount = require("../../app/credentials.json");
 
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-    name: "Crossmint-Firebase",
+    name: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   });
 }
 
@@ -28,122 +35,51 @@ export default function handler(req, res) {
 }
 
 async function handlePost(req, res) {
-  const body = JSON.parse(req.body)
-  const userId = body.userId;
-  const idToken = body.tokenId;
+  const idToken = req.headers.authorization;
+  const email = await getUserEmailFromIdToken(idToken);
 
-  admin
-    .auth()
-    .verifyIdToken(idToken)
-    .then(async function (decodedToken) {
-      var uid = decodedToken.uid;
-      const user = await admin.auth().getUser(uid);
-
-      if (user.email == userId) {
-        const created = await createWallets(userId);
-        if (!created) {
-          res.status(500).json({
-            error: true,
-            message: "Failed to create wallets for user",
-          });
-          return;
-        }
-        return res.status(200).json({
-          userId: userId,
-          walletsCreated: created
-        });
-      } else {
-        if (userId == null) {
-          res
-            .status(400)
-            .json({ error: true, message: "Missing userId parameter" });
-          return;
-        } else {
-          return res.status(403).json({ error: "Not authorized" });
-        }
-      }
+  const created = await createWallets(email);
+  if (!created) {
+    res.status(500).json({
+      error: true,
+      message: "Failed to create wallets for user",
     });
+    return;
+  }
+  return res.status(200).json({
+    email: email,
+    walletsCreated: created,
+  });
 }
 
 async function handleGet(req, res) {
-  const idToken = req.query.tokenId;
+  const idToken = req.headers.authorization || null;
   const userId = req.query.userId;
 
-  admin
-    .auth()
-    .verifyIdToken(idToken)
-    .then(async function (decodedToken) {
-      var uid = decodedToken.uid;
-      const user = await admin.auth().getUser(uid);
-
-      if (user.email == userId) {
-        const data = await findExistingWallets(userId);
-        if (data.error) {
-          res.status(400).json(data);
-          return;
-        }
-        let jsonData = {};
-
-        data.forEach((wallet) => {
-          const chain = wallet.chain;
-          const address = wallet.publicKey;
-
-          jsonData[chain] = address;
-        });
-
-        res.status(200).json(jsonData);
-        return;
-      } else {
-        res.status(403).json({ error: "Not authorized" });
-        return;
-      }
-    })
-    .catch(function (error) {
-      res.status(400);
-      return;
-    });
-}
-
-async function createWallets(userId) {
-  for (const chain of ["ethereum", "solana", "cardano"]) {
-    const url = `${process.env.CROSSMINT_BASEURL}/api/v1-alpha1/wallets`;
-    const options = {
-      method: "POST",
-      headers: {
-        accept: "application/json",
-        "content-type": "application/json",
-        "X-CLIENT-SECRET": process.env.CROSSMINT_X_CLIENT_SECRET,
-        "X-PROJECT-ID": process.env.CROSSMINT_X_PROJECT_ID,
-      },
-      body: JSON.stringify({ chain: chain, userId: userId }),
-    };
-
-    try {
-      await fetch(url, options);
-    } catch (error) {
-      console.error("Error whilst creating wallets", error);
-      return false;
-    }
+  if (!idToken) {
+    res.status(400).json({ error: "Bad request" });
+    return;
   }
-  return true;
-}
 
-async function findExistingWallets(userId) {
-  const url = `${process.env.CROSSMINT_BASEURL}/api/v1-alpha1/wallets?userId=${userId}`;
-  const options = {
-    method: "GET",
-    headers: {
-      accept: "application/json",
-      "X-CLIENT-SECRET": process.env.CROSSMINT_X_CLIENT_SECRET,
-      "X-PROJECT-ID": process.env.CROSSMINT_X_PROJECT_ID,
-    },
-  };
+  if (verifyIdTokenAndUserIdMatch(userId, idToken)) {
+    const data = await findExistingWallets(userId);
+    if (data.error) {
+      res.status(400).json(data);
+      return;
+    }
+    let jsonData = {};
 
-  try {
-    const response = await fetch(url, options);
-    return await response.json();
-  } catch (error) {
-    console.error("Error whilst fetching wallets", error);
-    return { error: true, message: "An internal error has occurred" };
+    data.forEach((wallet) => {
+      const chain = wallet.chain;
+      const address = wallet.publicKey;
+
+      jsonData[chain] = address;
+    });
+
+    res.status(200).json(jsonData);
+    return;
+  } else {
+    res.status(403).json({ error: "Not authorized" });
+    return;
   }
 }

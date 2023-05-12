@@ -2,7 +2,8 @@
 import React from "react";
 import signUp from "@/firebase/auth/signup";
 import { useRouter } from "next/navigation";
-import Link from 'next/link';
+import { getAuth } from "firebase/auth";
+import Link from "next/link";
 
 function Page() {
   const [email, setEmail] = React.useState("");
@@ -13,15 +14,15 @@ function Page() {
     event.preventDefault();
 
     const { result, error } = await signUp(email, password);
-    
-    const response = await fetch('/api/wallet', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(`{"userId" : "${email}"}`)
-    });
 
+    console.log(result.user.accessToken)
+
+    const response = await fetch("/api/wallet", {
+      method: "POST",
+      headers: { Authorization: result.user.accessToken }
+    });
+    
+    console.log(response)
 
     if (error) {
       return console.log(error);
@@ -37,7 +38,9 @@ function Page() {
         <h1 className="text-center text-lg text-gray-800 font-medium">
           Happy you are joining us!
         </h1>
-        <p className="text-sm text-center text-gray-600">To sign up, please fill this form</p>
+        <p className="text-sm text-center text-gray-600">
+          To sign up, please fill this form
+        </p>
         <form
           onSubmit={handleForm}
           className="form p-12 space-y-4 flex flex-col text-sm"
@@ -154,13 +157,13 @@ function Page() {
                 fill="#FFC24A"
                 d="m0 282.998l2.123-2.972L102.527 89.512l.212-2.017L58.48 4.358C54.77-2.606 44.33-.845 43.114 6.951L0 282.998Z"
               />
-              <use fill="#FFA712" fill-rule="evenodd" href="#logosFirebase2" />
+              <use fill="#FFA712" fillRule="evenodd" href="#logosFirebase2" />
               <use filter="url(#logosFirebase0)" href="#logosFirebase2" />
               <path
                 fill="#F4BD62"
                 d="m135.005 150.38l32.955-33.75l-32.965-62.93c-3.129-5.957-11.866-5.975-14.962 0L102.42 87.287v2.86l32.584 60.233Z"
               />
-              <use fill="#FFA50E" fill-rule="evenodd" href="#logosFirebase3" />
+              <use fill="#FFA50E" fillRule="evenodd" href="#logosFirebase3" />
               <use filter="url(#logosFirebase1)" href="#logosFirebase3" />
               <path
                 fill="#F6820C"
@@ -183,7 +186,10 @@ function Page() {
           </Link>
         </form>
         <p className="text-center">
-          <Link href="/" className="text-blue-400 hover:underline">Go back</Link></p>
+          <Link href="/" className="text-blue-400 hover:underline">
+            Go back
+          </Link>
+        </p>
       </div>
     </div>
   );
