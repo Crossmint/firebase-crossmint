@@ -36,4 +36,4 @@ yarn-error.log*
 next-env.d.ts
 
 # Firebase credentials
-/src/pages/api/credentials.json
+/src/app/api/credentials.json
