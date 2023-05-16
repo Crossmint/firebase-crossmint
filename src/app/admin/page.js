@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useAuthContext } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { getAuth, signOut } from "firebase/auth";
-import { headers } from "next/dist/client/components/headers";
 
 function Page() {
   const { user } = useAuthContext();

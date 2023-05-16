@@ -35,8 +35,8 @@ export async function getUserEmailFromIdToken(idToken) {
       return user;
     })
     .then((user) => user.email);
-  
-    return email
+
+  return email;
 }
 
 export async function createWallets(userId) {

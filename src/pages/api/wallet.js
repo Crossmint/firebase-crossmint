@@ -5,17 +5,6 @@ import {
   getUserEmailFromIdToken
 } from "../../utils/helpers.js";
 
-var admin = require("firebase-admin");
-
-var serviceAccount = require("../../app/credentials.json");
-
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    name: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  });
-}
-
 export default function handler(req, res) {
   switch (req.method) {
     case "GET":

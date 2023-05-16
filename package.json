@@ -12,10 +12,17 @@
     "autoprefixer": "10.4.14",
     "firebase": "^9.21.0",
     "firebase-admin": "^11.8.0",
+    "net": "^1.0.2",
     "next": "13.4.1",
     "postcss": "8.4.23",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "tailwindcss": "3.3.2"
+  },
+  "browser": {
+    "tls": false,
+    "net": false,
+    "fs" : false,
+    "child_process" : false
   }
 }
