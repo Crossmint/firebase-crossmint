@@ -16,7 +16,9 @@ function Page() {
 
   useEffect(() => {
     async function fetchData() {
-      const res = await fetch(`/api/wallet?userId=${user.email}`);
+      const res = await fetch(`/api/wallet?userId=${user.email}`, {
+        headers: { Authorization: getAuth().currentUser.accessToken },
+      });
       const jsonData = await res.json();
       setData(jsonData);
     }
@@ -27,7 +29,7 @@ function Page() {
     const auth = getAuth();
     signOut(auth).then(() => {
       router.push("/");
-    })
+    });
   }
 
   if (!data) {
