@@ -15,15 +15,11 @@ function Page() {
 
     const { result, error } = await signUp(email, password);
 
-    console.log(result.user.accessToken)
-
     const response = await fetch("/api/wallet", {
       method: "POST",
       headers: { Authorization: result.user.accessToken }
     });
     
-    console.log(response)
-
     if (error) {
       return console.log(error);
     }
