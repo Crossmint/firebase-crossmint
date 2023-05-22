@@ -4,6 +4,10 @@
 
 Create in under 5 minutes a fully functional user account system where each user has NFT custodial wallets created. This sample code uses Firebase for authentication and Crossmint for wallet creation.
 
+<p align="center">
+<img src="https://s12.gifyu.com/images/gif8ae755e851037aae.gif" alt="Demo GIF" width="value" height="500">
+</p>
+
 ## 1. Firebase set up
 
 ### Firebase dashboard
