@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useAuthContext } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { getAuth, signOut } from "firebase/auth";
+import firebase_app from "@/firebase/config";
 
 function Page() {
   const { user } = useAuthContext();
@@ -16,11 +17,13 @@ function Page() {
 
   useEffect(() => {
     async function fetchData() {
-      const res = await fetch(`/api/wallet?userId=${user.email}`, {
-        headers: { Authorization: getAuth().currentUser.accessToken },
-      });
-      const jsonData = await res.json();
-      setData(jsonData);
+      getAuth(firebase_app).currentUser.getIdToken().then(async function(idToken) {
+        const res = await fetch(`/api/wallet?userId=${user.email}`, {
+          headers: { Authorization: idToken },
+        });
+        const jsonData = await res.json();
+        setData(jsonData);
+      })
     }
     fetchData();
   }, []);
